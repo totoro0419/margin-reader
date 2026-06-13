@@ -1,0 +1,2420 @@
+﻿<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f0e6" />
+    <meta
+      name="description"
+      content="AI解析と辞書を備えた、個人用の英語多読リーダー"
+    />
+    <title>Margin Reader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Serif+JP:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+:root {
+  --paper: #f7f3eb;
+  --paper-deep: #ece5d8;
+  --ink: #20241f;
+  --muted: #767b70;
+  --line: #ded7ca;
+  --green: #255b49;
+  --green-soft: #dfe9e2;
+  --rust: #a84f36;
+  --blue: #416f82;
+  --amber: #b78536;
+  --sidebar: #eee8dc;
+  --white: #fffdf8;
+  --shadow: 0 18px 60px rgba(52, 48, 39, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "DM Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  color: inherit;
+  cursor: pointer;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 276px minmax(0, 1fr);
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 20px 20px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 6px 25px;
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  background: transparent;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 21px;
+}
+
+.brand h1,
+.brand p,
+.reader-header h2,
+.reader-header p {
+  margin: 0;
+}
+
+.brand h1 {
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 23px;
+  font-weight: 600;
+}
+
+.eyebrow,
+.card-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.primary-action {
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 15px;
+  color: var(--white);
+  background: var(--green);
+  font-weight: 600;
+}
+
+.source-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  border: 1px solid #b5c9bd;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--green);
+  background: rgba(255, 255, 255, 0.45);
+  font-weight: 600;
+}
+
+.library-nav {
+  display: grid;
+  gap: 2px;
+  margin: 24px 0;
+}
+
+.nav-item {
+  display: flex;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 7px;
+  padding: 10px 12px;
+  background: transparent;
+  color: #565c52;
+  text-align: left;
+}
+
+.nav-item.is-active {
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--ink);
+}
+
+.nav-item strong {
+  font-size: 12px;
+}
+
+.sidebar-section {
+  min-height: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 10px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.section-label button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.article-list {
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.article-list-item {
+  display: grid;
+  gap: 4px;
+  border: 0;
+  border-left: 2px solid transparent;
+  padding: 10px 10px 10px 12px;
+  background: transparent;
+  text-align: left;
+}
+
+.article-list-item.is-active {
+  border-left-color: var(--rust);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.article-list-item strong {
+  overflow: hidden;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.article-list-item span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.sidebar-footer {
+  display: grid;
+  gap: 14px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+
+.daily-progress > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.progress-track {
+  height: 3px;
+  margin: 9px 0 6px;
+  overflow: hidden;
+  background: #d5cdbf;
+}
+
+.progress-track i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--rust);
+  transition: width 0.3s ease;
+}
+
+.daily-progress small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.settings-button {
+  border: 0;
+  padding: 8px 0;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+}
+
+.workspace {
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  background: rgba(247, 243, 235, 0.94);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(16px);
+}
+
+.mobile-menu {
+  display: none;
+}
+
+.mode-switcher {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-deep);
+}
+
+.mode-button {
+  border: 0;
+  border-radius: 5px;
+  padding: 7px 15px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mode-button.is-active {
+  color: var(--ink);
+  background: var(--white);
+  box-shadow: 0 2px 7px rgba(45, 41, 34, 0.08);
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.icon-button,
+.finish-button,
+.secondary-button {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 8px 12px;
+  background: transparent;
+  font-size: 12px;
+}
+
+.finish-button {
+  color: var(--green);
+  border-color: #b5c9bd;
+  background: var(--green-soft);
+}
+
+.content-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.reader-pane {
+  width: min(820px, 100%);
+  min-height: calc(100vh - 70px);
+  margin: 0 auto;
+  padding: 66px 64px 100px;
+}
+
+.reader-header {
+  padding-bottom: 35px;
+  border-bottom: 1px solid var(--line);
+}
+
+.article-meta {
+  display: flex;
+  gap: 13px;
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.article-meta span:not(:last-child)::after {
+  content: "·";
+  margin-left: 13px;
+  color: #b2a99a;
+}
+
+.reader-header h2 {
+  max-width: 690px;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 500;
+  line-height: 1.14;
+  letter-spacing: -0.035em;
+}
+
+.article-summary {
+  max-width: 650px;
+  margin-top: 22px !important;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.reader-content {
+  padding-top: 34px;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 20px;
+  line-height: 1.95;
+}
+
+.reader-content p {
+  margin: 0 0 1.4em;
+}
+
+.word {
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.word:hover {
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.mode-assist .word.is-important {
+  color: var(--rust);
+  border-bottom: 1px dotted currentColor;
+}
+
+.mode-assist .word.is-connector {
+  color: var(--blue);
+  background: #e2ebee;
+}
+
+.sentence-translation {
+  display: none;
+  margin: -1.3em 0 1.8em !important;
+  color: var(--muted);
+  font-family: "DM Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.mode-assist .sentence-translation {
+  display: block;
+}
+
+.analysis-list {
+  display: grid;
+  gap: 18px;
+}
+
+.analysis-card {
+  padding: 19px 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 253, 248, 0.62);
+}
+
+.analysis-card blockquote {
+  margin: 0 0 13px;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.analysis-card .translation {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-family: "DM Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  font-size: 12px;
+}
+
+.grammar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.grammar-chip {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  border-radius: 4px;
+  padding: 5px 8px;
+  background: #ece8df;
+  font-family: "DM Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  font-size: 11px;
+}
+
+.grammar-chip strong {
+  color: var(--rust);
+}
+
+.analysis-note {
+  margin: 0;
+  color: #5e655b;
+  font-family: "DM Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.reader-end {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.reader-end span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.reader-end button {
+  border: 0;
+  border-bottom: 1px solid var(--green);
+  padding: 4px 0;
+  color: var(--green);
+  background: transparent;
+  font-size: 12px;
+}
+
+.inspector {
+  position: sticky;
+  top: 70px;
+  height: calc(100vh - 70px);
+  overflow-y: auto;
+  padding: 38px 27px;
+  background: var(--white);
+  border-left: 1px solid var(--line);
+}
+
+.inspector-placeholder {
+  display: grid;
+  justify-items: center;
+  padding: 95px 10px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.placeholder-glyph {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 18px;
+}
+
+.inspector-placeholder h3 {
+  margin: 18px 0 7px;
+  color: var(--ink);
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.inspector-placeholder p {
+  max-width: 220px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.word-card-topline,
+.word-heading,
+.word-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.word-card-topline {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+.word-card-topline button {
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+}
+
+.word-heading {
+  margin: 24px 0 27px;
+}
+
+.word-heading h3,
+.word-heading p {
+  margin: 0;
+}
+
+.word-heading h3 {
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 32px;
+  font-weight: 500;
+}
+
+.word-heading p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.round-button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.word-card section {
+  margin-bottom: 18px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+}
+
+.word-card section p {
+  margin: 0;
+}
+
+.word-card .meaning {
+  margin-top: 8px;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 17px;
+}
+
+.word-card .muted {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.core-image-box {
+  padding: 15px !important;
+  border: 0 !important;
+  border-radius: 8px;
+  background: var(--green-soft);
+}
+
+.core-image-box p:last-child {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.source-sentence {
+  margin-top: 8px !important;
+  color: #5e655b;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.word-actions {
+  gap: 8px;
+}
+
+.word-actions button,
+.word-actions a {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px;
+  color: inherit;
+  background: transparent;
+  font-size: 10px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.modal {
+  width: min(660px, calc(100% - 30px));
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.modal::backdrop {
+  background: rgba(31, 35, 30, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.modal form {
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.modal-header p,
+.modal-header h2 {
+  margin: 0;
+}
+
+.modal-header h2 {
+  margin-top: 5px;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-weight: 500;
+}
+
+.modal-close {
+  border: 0;
+  background: transparent;
+  font-size: 24px;
+}
+
+.tab-row {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.input-tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 9px 4px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.input-tab.is-active {
+  border-bottom-color: var(--rust);
+  color: var(--ink);
+}
+
+.modal label {
+  display: grid;
+  gap: 7px;
+  color: #50574e;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.modal input,
+.modal textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 11px 12px;
+  color: var(--ink);
+  background: var(--white);
+  outline: none;
+}
+
+.modal textarea {
+  resize: vertical;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  line-height: 1.6;
+}
+
+.modal input:focus,
+.modal textarea:focus {
+  border-color: var(--green);
+}
+
+.form-note {
+  margin: -9px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: end;
+  gap: 9px;
+  margin-top: 5px;
+}
+
+.modal-status {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.source-modal {
+  width: min(980px, calc(100% - 30px));
+}
+
+.source-dialog-content {
+  display: grid;
+  gap: 16px;
+  padding: 28px;
+}
+
+.source-toolbar,
+.source-controls,
+.source-footer,
+.source-footer > div {
+  display: flex;
+  align-items: center;
+}
+
+.source-toolbar,
+.source-footer {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.source-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-deep);
+}
+
+.source-tab {
+  border: 0;
+  border-radius: 5px;
+  padding: 8px 13px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.source-tab.is-active {
+  color: var(--ink);
+  background: var(--white);
+  box-shadow: 0 2px 7px rgba(45, 41, 34, 0.08);
+}
+
+.source-controls {
+  gap: 12px;
+}
+
+.source-controls input[type="search"] {
+  flex: 1;
+}
+
+.check-label {
+  display: flex !important;
+  align-items: center;
+  gap: 6px !important;
+  white-space: nowrap;
+}
+
+.check-label input {
+  width: auto !important;
+}
+
+.source-notice {
+  border-radius: 6px;
+  padding: 9px 11px;
+  color: var(--muted);
+  background: var(--paper-deep);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.source-list {
+  max-height: min(58vh, 600px);
+  overflow-y: auto;
+  display: grid;
+  gap: 7px;
+  padding-right: 3px;
+}
+
+.source-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 13px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 13px;
+  background: var(--white);
+}
+
+.source-card.is-downloaded {
+  opacity: 0.58;
+}
+
+.source-card input {
+  width: auto;
+  margin-top: 4px;
+}
+
+.source-card-main {
+  min-width: 0;
+}
+
+.source-card-main h3,
+.source-card-main p {
+  margin: 0;
+}
+
+.source-card-main h3 {
+  margin-bottom: 5px;
+  font-family: "Literata", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.source-card-main p {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.source-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.source-card-meta span,
+.source-status {
+  border-radius: 4px;
+  padding: 4px 6px;
+  color: #5d645a;
+  background: #ece8df;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.source-status {
+  white-space: nowrap;
+}
+
+.source-status.is-new {
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.source-empty {
+  padding: 45px 10px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 11px;
+}
+
+.source-footer {
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.source-footer > div {
+  gap: 8px;
+}
+
+.source-footer .primary-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.toast {
+  position: fixed;
+  z-index: 20;
+  right: 24px;
+  bottom: 24px;
+  transform: translateY(15px);
+  opacity: 0;
+  border-radius: 7px;
+  padding: 10px 14px;
+  color: var(--white);
+  background: var(--ink);
+  font-size: 11px;
+  pointer-events: none;
+  transition: 0.2s ease;
+}
+
+.toast.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+@media (max-width: 1050px) {
+  .content-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inspector {
+    position: fixed;
+    z-index: 8;
+    right: 16px;
+    bottom: 16px;
+    top: auto;
+    width: min(360px, calc(100% - 32px));
+    height: auto;
+    max-height: calc(100vh - 100px);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+
+  .inspector:has(.inspector-placeholder:not(.is-hidden)) {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    z-index: 15;
+    left: 0;
+    transform: translateX(-105%);
+    width: 276px;
+    transition: transform 0.2s ease;
+  }
+
+  .sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .topbar {
+    height: 60px;
+    padding: 0 14px;
+  }
+
+  .mobile-menu {
+    display: block;
+    border: 0;
+    background: transparent;
+  }
+
+  .mode-button {
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+
+  .finish-button {
+    display: none;
+  }
+
+  .reader-pane {
+    padding: 42px 20px 70px;
+  }
+
+  .reader-header h2 {
+    font-size: 34px;
+  }
+
+  .reader-content {
+    font-size: 18px;
+  }
+
+  .source-dialog-content {
+    padding: 20px;
+  }
+
+  .source-toolbar,
+  .source-controls,
+  .source-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .source-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .source-card {
+    grid-template-columns: auto 1fr;
+  }
+
+  .source-status {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+</style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <button class="brand-mark" aria-label="ホーム">M</button>
+          <div>
+            <p class="eyebrow">PERSONAL READER</p>
+            <h1>Margin</h1>
+          </div>
+        </div>
+
+        <button class="primary-action" id="newArticleButton">
+          <span>＋</span> 新しい英文を読む
+        </button>
+        <button class="source-action" id="browseSourcesButton">
+          <span>⌕</span> 記事を探す
+        </button>
+
+        <nav class="library-nav" aria-label="ライブラリ">
+          <button class="nav-item is-active" data-filter="all">
+            <span>Library</span><strong id="articleCount">0</strong>
+          </button>
+          <button class="nav-item" data-filter="unread">
+            <span>Unread</span><strong id="unreadCount">0</strong>
+          </button>
+          <button class="nav-item" data-filter="finished">
+            <span>Finished</span><strong id="finishedCount">0</strong>
+          </button>
+        </nav>
+
+        <div class="sidebar-section">
+          <div class="section-label">
+            <span>RECENT</span>
+            <button id="clearLibraryButton" title="ライブラリを初期化">Clear</button>
+          </div>
+          <div id="articleList" class="article-list"></div>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="daily-progress">
+            <div>
+              <span>Today's words</span>
+              <strong id="wordsRead">0</strong>
+            </div>
+            <div class="progress-track"><i id="wordProgress"></i></div>
+            <small>Daily goal: 1,000</small>
+          </div>
+          <button class="settings-button" id="settingsButton">⚙ Settings</button>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <button class="mobile-menu" id="mobileMenuButton" aria-label="メニュー">☰</button>
+          <div class="mode-switcher" role="tablist" aria-label="読書モード">
+            <button class="mode-button is-active" data-mode="flow">Flow</button>
+            <button class="mode-button" data-mode="assist">Assist</button>
+            <button class="mode-button" data-mode="analyze">Analyze</button>
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button" id="speakButton" title="読み上げ">▶</button>
+            <button class="finish-button" id="finishButton">Mark finished</button>
+          </div>
+        </header>
+
+        <div class="content-layout">
+          <article class="reader-pane">
+            <div class="reader-header">
+              <div class="article-meta">
+                <span id="sourceLabel">Sample library</span>
+                <span id="levelLabel">B1</span>
+                <span id="readingTimeLabel">4 min read</span>
+              </div>
+              <h2 id="articleTitle"></h2>
+              <p id="articleSummary" class="article-summary"></p>
+            </div>
+
+            <div id="readerContent" class="reader-content"></div>
+
+            <div class="reader-end">
+              <span>END OF ARTICLE</span>
+              <button id="finishBottomButton">Mark as finished</button>
+            </div>
+          </article>
+
+          <aside class="inspector" id="inspector">
+            <div class="inspector-placeholder" id="inspectorPlaceholder">
+              <span class="placeholder-glyph">Aa</span>
+              <h3>Click a word</h3>
+              <p>単語をクリックすると、文脈上の意味やコアイメージを表示します。</p>
+            </div>
+            <div class="word-card is-hidden" id="wordCard">
+              <div class="word-card-topline">
+                <span id="wordPart">WORD</span>
+                <button id="closeWordCard" aria-label="閉じる">×</button>
+              </div>
+              <div class="word-heading">
+                <div>
+                  <h3 id="selectedWord"></h3>
+                  <p id="wordPronunciation"></p>
+                </div>
+                <button id="speakWordButton" class="round-button">▶</button>
+              </div>
+              <section>
+                <p class="card-label">IN THIS CONTEXT</p>
+                <p id="wordMeaning" class="meaning"></p>
+                <p id="wordUsage" class="muted"></p>
+              </section>
+              <section class="core-image-box">
+                <p class="card-label">CORE IMAGE</p>
+                <p id="wordCoreImage"></p>
+              </section>
+              <section>
+                <p class="card-label">SOURCE SENTENCE</p>
+                <p id="wordSentence" class="source-sentence"></p>
+              </section>
+              <div class="word-actions">
+                <button id="saveWordButton">＋ Save word</button>
+                <button type="button" id="dictionaryLookupButton">辞書を取得</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="articleDialog" class="modal">
+      <form method="dialog" id="articleForm">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">ADD TO LIBRARY</p>
+            <h2>新しい英文を読む</h2>
+          </div>
+          <button type="button" class="modal-close" data-close-dialog="articleDialog" aria-label="閉じる">×</button>
+        </div>
+        <div class="tab-row">
+          <button type="button" class="input-tab is-active" data-input-tab="paste">英文を貼り付け</button>
+          <button type="button" class="input-tab" data-input-tab="url">URLから取得</button>
+        </div>
+        <label>
+          タイトル
+          <input id="articleTitleInput" placeholder="空欄ならAIが推定します" />
+        </label>
+        <div id="pastePanel">
+          <label>
+            英文
+            <textarea id="articleTextInput" rows="12" placeholder="ここに読みたい英文を貼り付けます"></textarea>
+          </label>
+        </div>
+        <div id="urlPanel" class="is-hidden">
+          <label>
+            記事URL
+            <input id="articleUrlInput" type="url" placeholder="https://example.com/article" />
+          </label>
+          <p class="form-note">サイト側の制限や構造によって取得できない場合は、本文を貼り付けてください。</p>
+        </div>
+        <div class="modal-status is-hidden" id="articleStatus"></div>
+        <div class="modal-actions">
+          <button type="button" class="secondary-button" data-close-dialog="articleDialog">Cancel</button>
+          <button type="submit" id="analyzeButton" class="primary-action">AIで解析して追加</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="settingsDialog" class="modal settings-modal">
+      <form method="dialog" id="settingsForm">
+          <div class="modal-header">
+            <div>
+              <p class="eyebrow">PRIVATE SETTINGS</p>
+              <h2>接続設定</h2>
+            </div>
+            <button type="button" class="modal-close" data-close-dialog="settingsDialog" aria-label="閉じる">×</button>
+          </div>
+          <label>
+            Gemini API key（直接解析）
+            <input id="geminiApiKeyInput" type="password" autocomplete="off" placeholder="AIza..." />
+          </label>
+          <label>
+            Gemini model
+            <input id="geminiModelInput" type="text" placeholder="gemini-2.5-flash-lite" />
+          </label>
+          <p class="form-note">
+            Gemini APIは本文の構文解析だけに使用します。記事一覧と本文取得は、公開API・通常fetch・読み取り用ミラーを順に試します。
+            APIキーはこのブラウザのLocalStorageだけに保存されます。個人端末でのみ使用してください。
+          </p>
+        <label>
+          1日の読書目標（語）
+          <input id="dailyGoalInput" type="number" min="100" step="100" />
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="secondary-button" data-close-dialog="settingsDialog">Cancel</button>
+          <button type="submit" class="primary-action">Save settings</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="sourceDialog" class="modal source-modal">
+      <div class="source-dialog-content">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">DISCOVER ARTICLES</p>
+            <h2>未取得の記事を探す</h2>
+          </div>
+          <button type="button" class="modal-close" data-close-dialog="sourceDialog" aria-label="閉じる">×</button>
+        </div>
+
+        <div class="source-toolbar">
+          <div class="source-tabs" role="tablist" aria-label="記事取得元">
+            <button type="button" class="source-tab is-active" data-source="frontiers">Frontiers for Young Minds</button>
+            <button type="button" class="source-tab" data-source="storyweaver">StoryWeaver</button>
+          </div>
+          <button type="button" class="secondary-button" id="refreshSourcesButton">更新</button>
+        </div>
+
+        <div class="source-controls">
+          <input id="sourceSearchInput" type="search" placeholder="タイトルや概要を検索" />
+          <label class="check-label">
+            <input id="onlyNewCheckbox" type="checkbox" checked />
+            未取得のみ
+          </label>
+        </div>
+
+        <div class="source-notice" id="sourceNotice">
+          Gemini URL ContextでFrontiers for Young Mindsの最新記事を表示します。
+        </div>
+        <div class="source-list" id="sourceList"></div>
+        <div class="source-empty is-hidden" id="sourceEmpty">表示できる記事がありません。</div>
+
+        <div class="source-footer">
+          <span id="sourceSelectionCount">0件選択</span>
+          <div>
+            <button type="button" class="secondary-button" data-close-dialog="sourceDialog">Cancel</button>
+            <button type="button" class="primary-action" id="importSourcesButton" disabled>選択した記事を取得</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" aria-live="polite"></div>
+    <script type="module">
+const STORAGE_KEY = "margin-reader-state-v1";
+const CONNECTORS = new Set([
+  "although", "however", "but", "yet", "because", "therefore", "while",
+  "whereas", "despite", "unless", "since", "instead", "moreover", "thus",
+  "nevertheless", "consequently", "otherwise", "though"
+]);
+
+const ANALYSIS_SCHEMA = {
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    level: { type: "string", enum: ["A1", "A2", "B1", "B2", "C1", "C2"] },
+    summaryJa: { type: "string" },
+    sentences: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          text: { type: "string" },
+          translation: { type: "string" },
+          structure: {
+            type: "object",
+            properties: {
+              S: { type: "string" },
+              V: { type: "string" },
+              O: { type: "string" },
+              C: { type: "string" }
+            },
+            required: ["S", "V", "O", "C"]
+          },
+          clauses: { type: "array", items: { type: "string" } },
+          explanation: { type: "string" }
+        },
+        required: ["text", "translation", "structure", "clauses", "explanation"]
+      }
+    },
+    vocabulary: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          word: { type: "string" },
+          partOfSpeech: { type: "string" },
+          pronunciation: { type: "string" },
+          meaningJa: { type: "string" },
+          coreImageJa: { type: "string" },
+          usageJa: { type: "string" },
+          sentence: { type: "string" }
+        },
+        required: ["word", "partOfSpeech", "pronunciation", "meaningJa", "coreImageJa", "usageJa", "sentence"]
+      }
+    }
+  },
+  required: ["title", "level", "summaryJa", "sentences", "vocabulary"]
+};
+
+const URL_ARTICLE_SCHEMA = {
+  type: "object",
+  properties: {
+    ...ANALYSIS_SCHEMA.properties,
+    text: { type: "string" },
+    source: { type: "string" },
+    sourceUrl: { type: "string" }
+  },
+  required: [...ANALYSIS_SCHEMA.required, "text", "source", "sourceUrl"]
+};
+
+const SOURCE_LIST_SCHEMA = {
+  type: "object",
+  properties: {
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          url: { type: "string" },
+          title: { type: "string" },
+          description: { type: "string" },
+          level: { type: "string" },
+          type: { type: "string" },
+          date: { type: "string" },
+          meta: { type: "string" }
+        },
+        required: ["url", "title", "description", "level", "type", "date", "meta"]
+      }
+    }
+  },
+  required: ["items"]
+};
+
+const SYSTEM_PROMPT = `You are an expert English reading tutor for a Japanese learner.
+Analyze the supplied English sentences in one response.
+Rules:
+- Analyze every sentence in the supplied numbered list. Do not skip any sentence.
+- Keep every sentence.text exactly identical to the original sentence, without changing punctuation.
+- Translate naturally into Japanese.
+- Write every learner-facing explanation in natural Japanese. Never output Simplified or Traditional Chinese.
+- For structure, identify the main clause's S, V, O, and C. Use an empty string when absent.
+- In clauses, identify important noun, adjective, and adverbial clauses and discourse relations such as contrast or cause. Explain them briefly in Japanese.
+- Explain only points that genuinely help reading comprehension.
+- Select useful or difficult vocabulary items from the supplied sentences. Do not include elementary function words.
+- Explain each vocabulary item's contextual meaning and core image in concise Japanese.
+- Determine CEFR level conservatively.
+- Return only the requested JSON.`;
+
+const sampleArticle = {
+  id: "sample-small-habits",
+  title: "Why Small Habits Matter More Than Sudden Motivation",
+  source: "Sample library",
+  sourceUrl: "",
+  level: "B1",
+  summaryJa: "大きな目標よりも、小さな習慣を繰り返すことが長期的な変化につながる理由を説明した短い記事です。",
+  createdAt: Date.now(),
+  finished: false,
+  text: `People often wait for motivation before they begin something difficult. They imagine that a powerful feeling will arrive and make hard work seem easy. However, motivation is unreliable because it changes with our mood, energy, and circumstances.
+
+Small habits offer a different path. When an action is easy enough to repeat, it can become part of daily life without requiring much thought. Reading two pages every evening may appear insignificant, yet those pages quietly accumulate over time.
+
+The real value of a habit is not the result of one action. It is the direction that repeated actions create. Although progress may be difficult to notice at first, consistency gradually changes what we are capable of doing.
+
+This is why successful habits usually begin with modest goals. Instead of depending on sudden inspiration, they make progress possible even on ordinary days.`,
+  analysis: {
+    sentences: [
+      {
+        text: "People often wait for motivation before they begin something difficult.",
+        translation: "人は難しいことを始める前に、しばしばやる気が出るのを待ちます。",
+        structure: { S: "People", V: "wait", O: "", C: "" },
+        clauses: ["before: 時を表す副詞節"],
+        explanation: "before以下が、待つタイミングを説明しています。"
+      },
+      {
+        text: "They imagine that a powerful feeling will arrive and make hard work seem easy.",
+        translation: "強い感情が湧き上がり、つらい作業を簡単に感じさせてくれると想像します。",
+        structure: { S: "They", V: "imagine", O: "that節", C: "" },
+        clauses: ["that: imagineの目的語となる名詞節"],
+        explanation: "make O C の形で、hard workをeasyに感じさせるという意味です。"
+      },
+      {
+        text: "However, motivation is unreliable because it changes with our mood, energy, and circumstances.",
+        translation: "しかし、やる気は気分、活力、状況によって変わるため、頼りになりません。",
+        structure: { S: "motivation", V: "is", O: "", C: "unreliable" },
+        clauses: ["because: 理由を表す副詞節", "However: 前文との対比"],
+        explanation: "結論を先に述べ、because以下で理由を加えています。"
+      },
+      {
+        text: "Small habits offer a different path.",
+        translation: "小さな習慣は別の道を示します。",
+        structure: { S: "Small habits", V: "offer", O: "a different path", C: "" },
+        clauses: [],
+        explanation: "前段のmotivation依存に対する対案を提示しています。"
+      },
+      {
+        text: "When an action is easy enough to repeat, it can become part of daily life without requiring much thought.",
+        translation: "行動が繰り返せるほど簡単なら、あまり考えなくても日常生活の一部になります。",
+        structure: { S: "it", V: "can become", O: "", C: "part of daily life" },
+        clauses: ["When: 条件・時を示す副詞節", "without: 伴わない動作"],
+        explanation: "easy enough to repeatは「繰り返せるほど簡単」という意味です。"
+      },
+      {
+        text: "Reading two pages every evening may appear insignificant, yet those pages quietly accumulate over time.",
+        translation: "毎晩2ページ読むことは取るに足らなく見えるかもしれませんが、そのページは時間とともに静かに積み重なります。",
+        structure: { S: "Reading two pages every evening", V: "may appear", O: "", C: "insignificant" },
+        clauses: ["yet: 見かけと結果の対比"],
+        explanation: "動名詞句が主語です。yet以下で小さな行動の蓄積を対比しています。"
+      },
+      {
+        text: "The real value of a habit is not the result of one action.",
+        translation: "習慣の本当の価値は、一回の行動の結果ではありません。",
+        structure: { S: "The real value of a habit", V: "is", O: "", C: "not the result of one action" },
+        clauses: [],
+        explanation: "一回ではなく反復に価値がある、という主張の導入です。"
+      },
+      {
+        text: "It is the direction that repeated actions create.",
+        translation: "それは、繰り返される行動が生み出す方向性です。",
+        structure: { S: "It", V: "is", O: "", C: "the direction" },
+        clauses: ["that: the directionを修飾する関係詞節"],
+        explanation: "that repeated actions createがdirectionの内容を限定します。"
+      },
+      {
+        text: "Although progress may be difficult to notice at first, consistency gradually changes what we are capable of doing.",
+        translation: "最初は進歩に気づきにくくても、継続は自分たちにできることを徐々に変えます。",
+        structure: { S: "consistency", V: "changes", O: "what we are capable of doing", C: "" },
+        clauses: ["Although: 譲歩を表す副詞節", "what: changesの目的語となる名詞節"],
+        explanation: "見えにくい短期の進歩と、長期的な能力変化を対比しています。"
+      },
+      {
+        text: "This is why successful habits usually begin with modest goals.",
+        translation: "これが、うまくいく習慣がたいてい控えめな目標から始まる理由です。",
+        structure: { S: "This", V: "is", O: "", C: "why successful habits usually begin with modest goals" },
+        clauses: ["why: 理由を説明する補語節"],
+        explanation: "前段までの説明を受けて結論へつなげています。"
+      },
+      {
+        text: "Instead of depending on sudden inspiration, they make progress possible even on ordinary days.",
+        translation: "突然のひらめきに頼る代わりに、普通の日でも前進できるようにします。",
+        structure: { S: "they", V: "make", O: "progress", C: "possible" },
+        clauses: ["Instead of: 選ばなかった方法との対比"],
+        explanation: "make O Cで「進歩を可能にする」。theyはsuccessful habitsを指します。"
+      }
+    ],
+    vocabulary: [
+      { word: "motivation", partOfSpeech: "noun", meaningJa: "やる気、行動を起こす動機", coreImageJa: "人を行動へ動かす内側の力", usageJa: "ここでは、何かを始めるきっかけとなる一時的な感情を指します。", sentence: "People often wait for motivation before they begin something difficult." },
+      { word: "unreliable", partOfSpeech: "adjective", meaningJa: "頼りにならない", coreImageJa: "必要なときに同じ働きをしてくれる保証がない", usageJa: "やる気は気分や状況で変動するため、継続の土台にはしにくいという意味です。", sentence: "However, motivation is unreliable because it changes with our mood, energy, and circumstances." },
+      { word: "accumulate", partOfSpeech: "verb", meaningJa: "徐々に積み重なる", coreImageJa: "小さなものが時間とともに一か所へ集まる", usageJa: "毎日のわずかな読書量が、長期間では大きな量になることを表します。", sentence: "Reading two pages every evening may appear insignificant, yet those pages quietly accumulate over time." },
+      { word: "insignificant", partOfSpeech: "adjective", meaningJa: "取るに足らない、重要でない", coreImageJa: "全体への影響が小さく、注目に値しないように見える", usageJa: "毎晩2ページという行動が、単独では小さく見えることを表します。", sentence: "Reading two pages every evening may appear insignificant, yet those pages quietly accumulate over time." },
+      { word: "consistency", partOfSpeech: "noun", meaningJa: "一貫して続けること、継続性", coreImageJa: "変動せず、同じ方向へ行動を重ね続ける", usageJa: "目に見える成果がなくても行動を続ける力を指します。", sentence: "Although progress may be difficult to notice at first, consistency gradually changes what we are capable of doing." },
+      { word: "modest", partOfSpeech: "adjective", meaningJa: "控えめな、大きすぎない", coreImageJa: "限度を越えず、現実的な範囲に収まる", usageJa: "達成しやすく、継続可能な小さな目標という意味です。", sentence: "This is why successful habits usually begin with modest goals." }
+    ]
+  }
+};
+
+const defaultState = {
+  articles: [sampleArticle],
+  activeArticleId: sampleArticle.id,
+  mode: "flow",
+  filter: "all",
+  savedWords: [],
+  wordsRead: 0,
+  sourceCatalogs: {},
+  settings: {
+    geminiApiKey: "",
+    geminiModel: "gemini-2.5-flash-lite",
+    dailyGoal: 1000
+  }
+};
+
+let state = loadState();
+let currentUtterance = null;
+const sourceState = {
+  source: "frontiers",
+  items: [],
+  selected: new Set(),
+  loading: false,
+  importing: false
+};
+
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!saved) return structuredClone(defaultState);
+
+    const validArticles = Array.isArray(saved.articles)
+      ? saved.articles.filter((article) =>
+        article
+        && typeof article.id === "string"
+        && typeof article.title === "string"
+        && typeof article.text === "string"
+        && article.text.trim()
+      )
+      : [];
+    const articles = validArticles.length ? validArticles : structuredClone(defaultState.articles);
+    const activeArticleId = articles.some((article) => article.id === saved.activeArticleId)
+      ? saved.activeArticleId
+      : articles[0].id;
+
+    return {
+      ...defaultState,
+      ...saved,
+      articles,
+      activeArticleId,
+      savedWords: Array.isArray(saved.savedWords) ? saved.savedWords : [],
+      sourceCatalogs: saved.sourceCatalogs && typeof saved.sourceCatalogs === "object" ? saved.sourceCatalogs : {},
+      settings: { ...defaultState.settings, ...saved.settings }
+    };
+  } catch {
+    return structuredClone(defaultState);
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function activeArticle() {
+  return state.articles.find((article) => article.id === state.activeArticleId) || state.articles[0];
+}
+
+function wordCount(text) {
+  return (text.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) || []).length;
+}
+
+function readingMinutes(text) {
+  return Math.max(1, Math.ceil(wordCount(text) / 180));
+}
+
+function escapeHtml(value = "") {
+  return value.replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[char]);
+}
+
+function normalizeWord(value = "") {
+  return value.toLowerCase().replace(/[^a-z'-]/g, "");
+}
+
+function normalizeArticleText(value = "") {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function sourceKeyForArticle(article) {
+  return article.sourceKey || article.sourceUrl || "";
+}
+
+function isSourceDownloaded(item) {
+  return state.articles.some((article) =>
+    sourceKeyForArticle(article) === item.key
+    || (item.url && article.sourceUrl === item.url)
+  );
+}
+
+function paragraphSentences(paragraph, article) {
+  const analysis = article.analysis?.sentences || [];
+  return analysis.filter((sentence) => paragraph.includes(sentence.text));
+}
+
+function renderWordTokens(text, article) {
+  const important = new Set((article.analysis?.vocabulary || []).map((item) => normalizeWord(item.word)));
+  return text.split(/(\b[A-Za-z]+(?:'[A-Za-z]+)?\b)/g).map((part) => {
+    if (!/^[A-Za-z]/.test(part)) return escapeHtml(part);
+    const normalized = normalizeWord(part);
+    const classes = ["word"];
+    if (important.has(normalized)) classes.push("is-important");
+    if (CONNECTORS.has(normalized)) classes.push("is-connector");
+    return `<span class="${classes.join(" ")}" data-word="${escapeHtml(part)}">${escapeHtml(part)}</span>`;
+  }).join("");
+}
+
+function renderReader() {
+  const article = activeArticle();
+  if (!article) return;
+
+  $("#articleTitle").textContent = article.title;
+  $("#sourceLabel").textContent = article.source || "Personal library";
+  $("#levelLabel").textContent = article.level || "—";
+  $("#readingTimeLabel").textContent = `${readingMinutes(article.text)} min read`;
+  $("#articleSummary").textContent = article.summaryJa || "";
+  $("#finishButton").textContent = article.finished ? "Finished ✓" : "Mark finished";
+  $("#finishBottomButton").textContent = article.finished ? "Finished ✓" : "Mark as finished";
+
+  const content = $("#readerContent");
+  content.className = `reader-content mode-${state.mode}`;
+
+  if (state.mode === "analyze") {
+    const sentences = article.analysis?.sentences || [];
+    content.innerHTML = sentences.length
+      ? `<div class="analysis-list">${sentences.map(renderAnalysisCard).join("")}</div>`
+      : `<p>この文章にはまだAI解析結果がありません。</p>`;
+  } else {
+    content.innerHTML = article.text.split(/\n\s*\n/).map((paragraph) => {
+      const sentenceData = paragraphSentences(paragraph, article);
+      const translations = sentenceData.map((item) =>
+        `<p class="sentence-translation">${escapeHtml(item.translation || "")}</p>`
+      ).join("");
+      return `<p>${renderWordTokens(paragraph, article)}</p>${translations}`;
+    }).join("");
+  }
+
+  $$(".mode-button").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.mode === state.mode);
+  });
+}
+
+function renderAnalysisCard(sentence) {
+  const structure = sentence.structure || {};
+  const chips = ["S", "V", "O", "C"]
+    .filter((key) => structure[key])
+    .map((key) => `<span class="grammar-chip"><strong>${key}</strong>${escapeHtml(structure[key])}</span>`)
+    .join("");
+  const clauses = (sentence.clauses || [])
+    .map((clause) => `<span class="grammar-chip">${escapeHtml(clause)}</span>`)
+    .join("");
+
+  return `
+    <section class="analysis-card">
+      <blockquote>${renderWordTokens(sentence.text, activeArticle())}</blockquote>
+      <p class="translation">${escapeHtml(sentence.translation || "")}</p>
+      <div class="grammar-grid">${chips}${clauses}</div>
+      <p class="analysis-note">${escapeHtml(sentence.explanation || "")}</p>
+    </section>
+  `;
+}
+
+function renderLibrary() {
+  const article = activeArticle();
+  const filtered = state.articles.filter((item) => {
+    if (state.filter === "finished") return item.finished;
+    if (state.filter === "unread") return !item.finished;
+    return true;
+  });
+
+  $("#articleList").innerHTML = filtered.map((item) => `
+    <button class="article-list-item ${item.id === article?.id ? "is-active" : ""}" data-article-id="${item.id}">
+      <strong>${escapeHtml(item.title)}</strong>
+      <span>${item.finished ? "Finished" : `${wordCount(item.text)} words · ${item.level || "—"}`}</span>
+    </button>
+  `).join("");
+
+  $("#articleCount").textContent = state.articles.length;
+  $("#unreadCount").textContent = state.articles.filter((item) => !item.finished).length;
+  $("#finishedCount").textContent = state.articles.filter((item) => item.finished).length;
+  $$(".nav-item").forEach((button) => button.classList.toggle("is-active", button.dataset.filter === state.filter));
+}
+
+function renderProgress() {
+  const goal = state.settings.dailyGoal || 1000;
+  $("#wordsRead").textContent = state.wordsRead.toLocaleString();
+  $("#wordProgress").style.width = `${Math.min(100, (state.wordsRead / goal) * 100)}%`;
+  $(".daily-progress small").textContent = `Daily goal: ${goal.toLocaleString()}`;
+}
+
+function renderAll() {
+  renderLibrary();
+  renderReader();
+  renderProgress();
+}
+
+function showWordCard(word, sentenceText = "") {
+  const article = activeArticle();
+  const normalized = normalizeWord(word);
+  const vocabulary = (article.analysis?.vocabulary || []).find(
+    (item) => normalizeWord(item.word) === normalized
+  );
+
+  $("#inspectorPlaceholder").classList.add("is-hidden");
+  $("#wordCard").classList.remove("is-hidden");
+  $("#selectedWord").textContent = word;
+  $("#wordPart").textContent = vocabulary?.partOfSpeech?.toUpperCase() || "WORD";
+  $("#wordPronunciation").textContent = vocabulary?.pronunciation || "クリックして発音";
+  $("#wordMeaning").textContent = vocabulary?.meaningJa || "AIによる文脈解析はまだ取得されていません。";
+  $("#wordUsage").textContent = vocabulary?.usageJa || "AI解析結果がないため、文脈補足は未表示です。";
+  $("#wordCoreImage").textContent = vocabulary?.coreImageJa || "AI解析結果がないため、コアイメージは未表示です。";
+  $("#wordSentence").textContent = vocabulary?.sentence || sentenceText || "";
+  $("#dictionaryLookupButton").dataset.word = normalized;
+  $("#saveWordButton").textContent = state.savedWords.some((item) => item.word === normalized) ? "Saved ✓" : "＋ Save word";
+  $("#saveWordButton").dataset.word = normalized;
+}
+
+function closeWordCard() {
+  $("#wordCard").classList.add("is-hidden");
+  $("#inspectorPlaceholder").classList.remove("is-hidden");
+}
+
+function toggleFinished() {
+  const article = activeArticle();
+  article.finished = !article.finished;
+  if (article.finished) state.wordsRead += wordCount(article.text);
+  else state.wordsRead = Math.max(0, state.wordsRead - wordCount(article.text));
+  saveState();
+  renderAll();
+  showToast(article.finished ? "読了として記録しました" : "未読に戻しました");
+}
+
+function speak(text, lang = "en-US") {
+  if (!("speechSynthesis" in window)) {
+    showToast("このブラウザは読み上げに対応していません");
+    return;
+  }
+  speechSynthesis.cancel();
+  currentUtterance = new SpeechSynthesisUtterance(text);
+  currentUtterance.lang = lang;
+  currentUtterance.rate = 0.9;
+  speechSynthesis.speak(currentUtterance);
+}
+
+function showToast(message) {
+  const toast = $("#toast");
+  toast.textContent = message;
+  toast.classList.add("is-visible");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove("is-visible"), 2200);
+}
+
+function setArticleStatus(message, visible = true) {
+  $("#articleStatus").textContent = message;
+  $("#articleStatus").classList.toggle("is-hidden", !visible);
+}
+
+
+function splitIntoSentences(text = "") {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) return [];
+  const protectedText = cleaned
+    .replace(/\b(Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr|vs)\./g, "$1§")
+    .replace(/\b(e\.g|i\.e)\./g, (match) => match.replace(/\./g, "§"));
+  return (protectedText.match(/[^.!?]+[.!?]+["')\]]?|[^.!?]+$/g) || [])
+    .map((sentence) => sentence.replace(/§/g, ".").trim())
+    .filter((sentence) => /[A-Za-z]/.test(sentence));
+}
+
+
+async function requestFullArticleAnalysis({ title = "", text = "", sourceUrl = "", onProgress = null }) {
+  if (!text || text.length < 50) throw new Error("解析する英文が短すぎます。");
+  if (text.length > 60000) throw new Error("英文は60,000文字以内にしてください。");
+  const sentences = splitIntoSentences(text);
+  if (!sentences.length) throw new Error("英文の文を検出できませんでした。");
+
+  onProgress?.(5, 0, 1);
+  const numbered = sentences.map((sentence, index) => `${index + 1}. ${sentence}`).join("\n");
+  const prompt = `${SYSTEM_PROMPT}\n\nTitle: ${title || "(unknown)"}\nSource URL: ${sourceUrl || "(none)"}\n\nARTICLE SENTENCES:\n${numbered}\n\nReturn one JSON object. Analyze as many numbered sentences as possible in this single response. Do not invent missing sentence analysis. Keep explanations concise.`;
+  const result = await requestGeminiJson(prompt, ANALYSIS_SCHEMA);
+  onProgress?.(85, 1, 1);
+
+  const analyzedSentences = validateAndMergeSentenceAnalysis(sentences, result.sentences || []);
+  const seen = new Set();
+  const vocabulary = (result.vocabulary || [])
+    .filter((item) => item?.word)
+    .filter((item) => {
+      const key = normalizeWord(item.word);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 40);
+
+  onProgress?.(100, 1, 1);
+  return {
+    title: result.title || title || "Untitled article",
+    level: result.level || "—",
+    summaryJa: result.summaryJa || "",
+    sentences: analyzedSentences,
+    vocabulary
+  };
+}
+
+async function fetchTextViaReadableUrl(url) {
+  const targets = [
+    url,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    `https://r.jina.ai/http://${url.replace(/^https?:\/\//, "")}`
+  ];
+  let lastError = null;
+  for (const target of targets) {
+    try {
+      const response = await fetch(target);
+      if (!response.ok) throw new Error(`${response.status}`);
+      const raw = await response.text();
+      if (raw && raw.length > 200) return raw;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw new Error(`本文取得に失敗しました。${lastError?.message || ""}`);
+}
+
+function extractMainText(raw = "", url = "") {
+  const isHtml = /<html|<article|<p[\s>]/i.test(raw);
+  if (!isHtml) {
+    return raw
+      .replace(/^Title:.*$/gmi, "")
+      .replace(/^URL Source:.*$/gmi, "")
+      .replace(/^Markdown Content:.*$/gmi, "")
+      .replace(/\[(.*?)\]\([^)]*\)/g, "$1")
+      .replace(/^#{1,6}\s*/gm, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+  const doc = new DOMParser().parseFromString(raw, "text/html");
+  doc.querySelectorAll("script,style,nav,header,footer,aside,form,noscript,svg").forEach((node) => node.remove());
+  const candidates = [doc.querySelector("article"), doc.querySelector("main"), doc.body].filter(Boolean);
+  const best = candidates.sort((a, b) => b.innerText.length - a.innerText.length)[0];
+  return [...best.querySelectorAll("h1,h2,p,li")]
+    .map((node) => node.innerText.trim())
+    .filter((line) => line.split(/\s+/).length >= 4)
+    .join("\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+async function extractArticleFromUrl(url, title = "", sourceName = "") {
+  const raw = await fetchTextViaReadableUrl(url);
+  const text = extractMainText(raw, url);
+  if (wordCount(text) < 80) throw new Error("本文が短すぎます。サイト側制限の可能性があります。");
+  return {
+    title: title || new URL(url).hostname,
+    source: sourceName || new URL(url).hostname,
+    sourceUrl: url,
+    text
+  };
+}
+
+async function fetchDictionaryEntry(word) {
+  const normalized = normalizeWord(word);
+  if (!normalized) return;
+  const button = $("#dictionaryLookupButton");
+  button.disabled = true;
+  button.textContent = "取得中…";
+  try {
+    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(normalized)}`);
+    if (!response.ok) throw new Error("辞書データが見つかりません。");
+    const data = await response.json();
+    const entry = data?.[0];
+    const phonetic = entry?.phonetic || entry?.phonetics?.find((p) => p.text)?.text || "";
+    const meaning = entry?.meanings?.[0];
+    const definition = meaning?.definitions?.[0]?.definition || "";
+    const example = meaning?.definitions?.find((d) => d.example)?.example || "";
+    $("#wordPart").textContent = (meaning?.partOfSpeech || "WORD").toUpperCase();
+    $("#wordPronunciation").textContent = phonetic || "発音表記なし";
+    $("#wordMeaning").textContent = definition || "定義を取得できませんでした。";
+    $("#wordUsage").textContent = example ? `Example: ${example}` : "例文はありません。";
+    $("#wordCoreImage").textContent = "英英辞書の定義をアプリ内に表示しています。外部ページには移動しません。";
+    button.textContent = "辞書を再取得";
+  } catch (error) {
+    showToast(error.message || "辞書取得に失敗しました");
+    button.textContent = "辞書を取得";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function requestGeminiDirect({ title = "", text = "", sourceUrl = "", onProgress = null }) {
+  return requestFullArticleAnalysis({ title, text, sourceUrl, onProgress });
+}
+
+async function requestGeminiJson(prompt, schema, tools = []) {
+  if (!state.settings.geminiApiKey) {
+    throw new Error("SettingsでGemini APIキーを設定してください。");
+  }
+  const model = state.settings.geminiModel.trim() || "gemini-2.5-flash-lite";
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  let response;
+
+  try {
+    const body = {
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: schema,
+        temperature: 0.2,
+        maxOutputTokens: 16000
+      }
+    };
+    if (tools.length) body.tools = tools;
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": state.settings.geminiApiKey
+      },
+      body: JSON.stringify(body)
+    });
+  } catch {
+    throw new Error("Gemini APIへ接続できませんでした。APIキーやブラウザの通信制限を確認してください。");
+  }
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(result?.error?.message || `Gemini API error (${response.status})`);
+  }
+  const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!rawText) throw new Error("Geminiから解析結果が返りませんでした。");
+
+  try {
+    return JSON.parse(rawText.replace(/^```json\s*|\s*```$/g, "").trim());
+  } catch {
+    throw new Error("Geminiの解析結果を読み取れませんでした。");
+  }
+}
+
+async function discoverSourceArticles(source) {
+  if (source === "storyweaver") return discoverStoryWeaverArticles();
+  return discoverFrontiersArticles();
+}
+
+async function discoverStoryWeaverArticles() {
+  const apiUrl = "https://storyweaver.org.in/node/api/v1/books-search?page=1&per_page=40&languages%5B%5D=English";
+  const raw = await fetchTextViaReadableUrl(apiUrl);
+  let json;
+  try { json = JSON.parse(raw); } catch { throw new Error("StoryWeaver APIのJSONを読み取れませんでした。"); }
+  const records = Array.isArray(json) ? json : (json.books || json.data || json.results || json.items || []);
+  const items = records.map((book) => {
+    const title = book.title || book.name || book.book_title || "Untitled story";
+    const slug = book.slug || book.id || book.uuid || encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"));
+    const url = book.url?.startsWith("http") ? book.url : `https://storyweaver.org.in/en/stories/${slug}`;
+    return {
+      url,
+      title,
+      description: book.description || book.synopsis || book.short_description || "",
+      level: book.reading_level || book.level || "",
+      type: "Story",
+      date: book.published_at || book.created_at || "",
+      meta: "StoryWeaver / English",
+      sourceName: "StoryWeaver"
+    };
+  });
+  return normalizeSourceItems("storyweaver", items);
+}
+
+async function discoverFrontiersArticles() {
+  const listUrl = "https://kids.frontiersin.org/articles";
+  const raw = await fetchTextViaReadableUrl(listUrl);
+  const links = [];
+  const seen = new Set();
+  const hrefRegex = /(?:href=["']|\()(?<url>https?:\/\/kids\.frontiersin\.org\/articles\/10\.3389\/[^"')\s]+|\/articles\/10\.3389\/[^"')\s]+)/gi;
+  let match;
+  while ((match = hrefRegex.exec(raw))) {
+    let url = match.groups.url;
+    if (url.startsWith("/")) url = `https://kids.frontiersin.org${url}`;
+    url = url.replace(/[?#].*$/, "");
+    if (seen.has(url)) continue;
+    seen.add(url);
+    const slug = url.split("/").filter(Boolean).pop() || "";
+    links.push({
+      url,
+      title: slug.replace(/[-_]/g, " ").replace(/\w/g, (c) => c.toUpperCase()),
+      description: "Frontiers for Young Minds article",
+      level: "B1-B2",
+      type: "Science article",
+      date: "",
+      meta: "Frontiers for Young Minds",
+      sourceName: "Frontiers for Young Minds"
+    });
+  }
+  return normalizeSourceItems("frontiers", links.slice(0, 40));
+}
+
+function normalizeSourceItems(source, items) {
+  const seen = new Set();
+  return items.map((item) => {
+    const url = String(item.url || "").trim();
+    if (source === "frontiers" && !/^https:\/\/kids\.frontiersin\.org\/articles\/10\.3389\//i.test(url)) return null;
+    if (source === "storyweaver" && !/^https:\/\/storyweaver\.org\.in\/en\/stories\//i.test(url)) return null;
+    if (seen.has(url)) return null;
+    seen.add(url);
+    const slug = url.split("/").filter(Boolean).pop() || "";
+    return {
+      ...item,
+      key: source === "storyweaver" ? `storyweaver:${slug}` : url,
+      slug,
+      url,
+      sourceName: source === "frontiers" ? "Frontiers for Young Minds" : "StoryWeaver"
+    };
+  }).filter(Boolean);
+}
+
+async function analyzeArticleUrl({ url, title = "", sourceName = "", onProgress = null }) {
+  if (!/^https?:\/\//i.test(url)) throw new Error("有効な記事URLを指定してください。");
+  const extracted = await extractArticleFromUrl(url, title, sourceName);
+  const result = await requestFullArticleAnalysis({
+    title: extracted.title,
+    text: extracted.text,
+    sourceUrl: url,
+    onProgress
+  });
+  return {
+    ...result,
+    text: extracted.text,
+    source: extracted.source || sourceName || "Web article",
+    sourceUrl: url,
+    title: result.title || extracted.title || title || "Untitled article"
+  };
+}
+
+function renderSourceList() {
+  const query = normalizeArticleText($("#sourceSearchInput").value);
+  const onlyNew = $("#onlyNewCheckbox").checked;
+  const items = sourceState.items.filter((item) => {
+    if (onlyNew && isSourceDownloaded(item)) return false;
+    if (!query) return true;
+    return normalizeArticleText(`${item.title} ${item.description || ""} ${item.meta || ""}`).includes(query);
+  });
+
+  $("#sourceList").innerHTML = items.map((item) => {
+    const downloaded = isSourceDownloaded(item);
+    const selected = sourceState.selected.has(item.key);
+    return `
+      <label class="source-card ${downloaded ? "is-downloaded" : ""}">
+        <input type="checkbox" data-source-key="${escapeHtml(item.key)}" ${selected ? "checked" : ""} ${downloaded ? "disabled" : ""} />
+        <span class="source-card-main">
+          <h3>${escapeHtml(item.title)}</h3>
+          <p>${escapeHtml(item.description || "概要はありません。")}</p>
+          <span class="source-card-meta">
+            ${item.level ? `<span>${escapeHtml(item.level)}</span>` : ""}
+            ${item.type ? `<span>${escapeHtml(item.type)}</span>` : ""}
+            ${item.date ? `<span>${escapeHtml(item.date)}</span>` : ""}
+            ${item.meta ? `<span>${escapeHtml(item.meta)}</span>` : ""}
+          </span>
+        </span>
+        <span class="source-status ${downloaded ? "" : "is-new"}">${downloaded ? "取得済み" : "未取得"}</span>
+      </label>
+    `;
+  }).join("");
+
+  $("#sourceEmpty").classList.toggle("is-hidden", items.length > 0 || sourceState.loading);
+  $("#sourceSelectionCount").textContent = `${sourceState.selected.size}件選択`;
+  $("#importSourcesButton").disabled = sourceState.selected.size === 0 || sourceState.importing;
+}
+
+async function loadSources(forceRefresh = false) {
+  sourceState.loading = true;
+  sourceState.selected.clear();
+  $("#sourceList").innerHTML = `<div class="source-empty">記事一覧を取得しています…</div>`;
+  $("#sourceEmpty").classList.add("is-hidden");
+  $("#refreshSourcesButton").disabled = true;
+  $("#sourceNotice").textContent = sourceState.source === "frontiers"
+    ? "公開ページからFrontiers for Young Mindsの記事一覧を取得しています。"
+    : "StoryWeaver APIから英語作品を取得しています。";
+
+  try {
+    const cached = state.sourceCatalogs[sourceState.source];
+    const cacheIsFresh = cached?.items?.length && Date.now() - cached.fetchedAt < 12 * 60 * 60 * 1000;
+    sourceState.items = !forceRefresh && cacheIsFresh
+      ? cached.items
+      : await discoverSourceArticles(sourceState.source);
+    if (!cacheIsFresh || forceRefresh) {
+      state.sourceCatalogs[sourceState.source] = { items: sourceState.items, fetchedAt: Date.now() };
+      saveState();
+    }
+    $("#sourceNotice").textContent = sourceState.source === "frontiers"
+      ? `Frontiers for Young Mindsの記事 ${sourceState.items.length}件。${cacheIsFresh && !forceRefresh ? "保存済み一覧を表示中。" : ""}`
+      : `StoryWeaverの英語作品 ${sourceState.items.length}件。${cacheIsFresh && !forceRefresh ? "保存済み一覧を表示中。" : "作品はCC BY 4.0です。"}`;
+  } catch (error) {
+    sourceState.items = [];
+    $("#sourceNotice").textContent = `一覧の取得に失敗しました: ${error.message}`;
+  } finally {
+    sourceState.loading = false;
+    $("#refreshSourcesButton").disabled = false;
+    renderSourceList();
+  }
+}
+
+function createImportedArticle(item, extracted, result = {}) {
+  return {
+    id: crypto.randomUUID(),
+    title: result.title || extracted.title || item.title || "Untitled article",
+    source: extracted.source || item.sourceName || "Imported article",
+    sourceKey: item.key,
+    sourceUrl: extracted.sourceUrl || item.url || "",
+    level: result.level || item.level || "—",
+    summaryJa: result.summaryJa || item.description || "",
+    text: extracted.text,
+    analysis: {
+      sentences: result.sentences || [],
+      vocabulary: result.vocabulary || []
+    },
+    createdAt: Date.now(),
+    finished: false
+  };
+}
+
+async function importSelectedSources() {
+  const selectedItems = sourceState.items.filter((item) => sourceState.selected.has(item.key) && !isSourceDownloaded(item));
+  if (!selectedItems.length) return;
+
+  sourceState.importing = true;
+  renderSourceList();
+  let imported = 0;
+  let failed = 0;
+
+  for (let index = 0; index < selectedItems.length; index += 1) {
+    const item = selectedItems[index];
+    $("#sourceNotice").textContent = `${index + 1} / ${selectedItems.length}: 「${item.title}」を取得しています…`;
+    try {
+      const result = await analyzeArticleUrl({
+        url: item.url,
+        title: item.title,
+        sourceName: item.sourceName,
+        onProgress: (percent) => {
+          $("#sourceNotice").textContent = `${index + 1} / ${selectedItems.length}: 「${item.title}」を全文解析中 ${percent}%`;
+        }
+      });
+      const article = createImportedArticle(item, result, result);
+      state.articles.unshift(article);
+      state.activeArticleId = article.id;
+      imported += 1;
+      sourceState.selected.delete(item.key);
+      saveState();
+    } catch (error) {
+      failed += 1;
+      $("#sourceNotice").textContent = `「${item.title}」の取得に失敗しました: ${error.message}`;
+    }
+  }
+
+  state.filter = "all";
+  sourceState.importing = false;
+  saveState();
+  renderAll();
+  renderSourceList();
+  $("#sourceNotice").textContent = failed
+    ? `${imported}件を取得・解析しました。${failed}件は取得できませんでした。`
+    : `${imported}件を取得・解析しました。`;
+  if (imported) showToast(`${imported}件の記事をライブラリへ追加しました`);
+}
+
+async function addArticle(event) {
+  event.preventDefault();
+  const activeTab = $(".input-tab.is-active").dataset.inputTab;
+  let title = $("#articleTitleInput").value.trim();
+  let text = $("#articleTextInput").value.trim();
+  let sourceUrl = $("#articleUrlInput").value.trim();
+
+  $("#analyzeButton").disabled = true;
+  setArticleStatus(activeTab === "url" ? "URLから本文を取得しています…" : "Geminiで記事全体を解析しています…");
+
+  try {
+    let result;
+    if (activeTab === "url") {
+      if (!sourceUrl) throw new Error("記事URLを入力してください。");
+      const existingByUrl = state.articles.find((article) => article.sourceUrl === sourceUrl);
+      if (existingByUrl) {
+        state.activeArticleId = existingByUrl.id;
+        state.filter = "all";
+        saveState();
+        renderAll();
+        $("#articleDialog").close();
+        showToast("取得済みの記事を開きました");
+        return;
+      }
+      result = await analyzeArticleUrl({
+        url: sourceUrl,
+        title,
+        sourceName: new URL(sourceUrl).hostname,
+        onProgress: (percent) => setArticleStatus(`本文を全文解析中 ${percent}%`)
+      });
+      text = result.text;
+      title ||= result.title;
+      setArticleStatus("本文を取得・解析しました。");
+    }
+    if (wordCount(text) < 20) throw new Error("解析する英文をもう少し長く入力してください。");
+
+    const existing = state.articles.find((article) =>
+      normalizeArticleText(article.text) === normalizeArticleText(text)
+    );
+    if (existing) {
+      state.activeArticleId = existing.id;
+      state.filter = "all";
+      saveState();
+      renderAll();
+      $("#articleDialog").close();
+      showToast("解析済みの記事を開きました");
+      return;
+    }
+
+    result ||= await requestGeminiDirect({
+      title,
+      text,
+      sourceUrl,
+      onProgress: (percent) => setArticleStatus(`本文を全文解析中 ${percent}%`)
+    });
+    const article = {
+      id: crypto.randomUUID(),
+      title: result.title || title || "Untitled article",
+      source: result.source || (sourceUrl ? new URL(sourceUrl).hostname : "Personal text"),
+      sourceUrl,
+      level: result.level || "—",
+      summaryJa: result.summaryJa || "",
+      text,
+      analysis: {
+        sentences: result.sentences || [],
+        vocabulary: result.vocabulary || []
+      },
+      createdAt: Date.now(),
+      finished: false
+    };
+    state.articles.unshift(article);
+    state.activeArticleId = article.id;
+    state.filter = "all";
+    saveState();
+    renderAll();
+    $("#articleDialog").close();
+    $("#articleForm").reset();
+    showToast("記事を解析して追加しました");
+  } catch (error) {
+    setArticleStatus(error.message || "解析に失敗しました。");
+  } finally {
+    $("#analyzeButton").disabled = false;
+  }
+}
+
+function bindEvents() {
+  $("#newArticleButton").addEventListener("click", () => {
+    setArticleStatus("", false);
+    $("#articleDialog").showModal();
+  });
+  $("#settingsButton").addEventListener("click", () => {
+    $("#geminiApiKeyInput").value = state.settings.geminiApiKey || "";
+    $("#geminiModelInput").value = state.settings.geminiModel || "gemini-2.5-flash-lite";
+    $("#dailyGoalInput").value = state.settings.dailyGoal;
+    $("#settingsDialog").showModal();
+  });
+  $("#browseSourcesButton").addEventListener("click", () => {
+    $("#sourceDialog").showModal();
+    loadSources();
+  });
+  $("#refreshSourcesButton").addEventListener("click", () => loadSources(true));
+  $("#sourceSearchInput").addEventListener("input", renderSourceList);
+  $("#onlyNewCheckbox").addEventListener("change", renderSourceList);
+  $("#sourceList").addEventListener("change", (event) => {
+    const checkbox = event.target.closest("[data-source-key]");
+    if (!checkbox) return;
+    if (checkbox.checked) sourceState.selected.add(checkbox.dataset.sourceKey);
+    else sourceState.selected.delete(checkbox.dataset.sourceKey);
+    renderSourceList();
+  });
+  $$(".source-tab").forEach((button) => button.addEventListener("click", () => {
+    if (sourceState.importing || sourceState.source === button.dataset.source) return;
+    sourceState.source = button.dataset.source;
+    $$(".source-tab").forEach((tab) => tab.classList.toggle("is-active", tab === button));
+    loadSources();
+  }));
+  $("#importSourcesButton").addEventListener("click", importSelectedSources);
+  $("#articleForm").addEventListener("submit", addArticle);
+  $("#settingsForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    state.settings.geminiApiKey = $("#geminiApiKeyInput").value.trim();
+    state.settings.geminiModel = $("#geminiModelInput").value.trim() || "gemini-2.5-flash-lite";
+    state.settings.dailyGoal = Number($("#dailyGoalInput").value) || 1000;
+    saveState();
+    renderProgress();
+    $("#settingsDialog").close();
+    showToast("設定を保存しました");
+  });
+
+  $$(".mode-button").forEach((button) => button.addEventListener("click", () => {
+    state.mode = button.dataset.mode;
+    saveState();
+    renderReader();
+  }));
+  $$(".nav-item").forEach((button) => button.addEventListener("click", () => {
+    state.filter = button.dataset.filter;
+    saveState();
+    renderLibrary();
+  }));
+  $$(".input-tab").forEach((button) => button.addEventListener("click", () => {
+    $$(".input-tab").forEach((tab) => tab.classList.toggle("is-active", tab === button));
+    $("#pastePanel").classList.toggle("is-hidden", button.dataset.inputTab !== "paste");
+    $("#urlPanel").classList.toggle("is-hidden", button.dataset.inputTab !== "url");
+  }));
+
+  $("#articleList").addEventListener("click", (event) => {
+    const item = event.target.closest("[data-article-id]");
+    if (!item) return;
+    state.activeArticleId = item.dataset.articleId;
+    saveState();
+    closeWordCard();
+    renderAll();
+    $("#sidebar").classList.remove("is-open");
+  });
+  $("#readerContent").addEventListener("click", (event) => {
+    const word = event.target.closest("[data-word]");
+    if (!word) return;
+    const sentence = word.closest(".analysis-card")?.querySelector("blockquote")?.textContent || "";
+    showWordCard(word.dataset.word, sentence);
+  });
+  $("#closeWordCard").addEventListener("click", closeWordCard);
+  $("#finishButton").addEventListener("click", toggleFinished);
+  $("#finishBottomButton").addEventListener("click", toggleFinished);
+  $("#speakButton").addEventListener("click", () => speak(activeArticle().text));
+  $("#speakWordButton").addEventListener("click", () => speak($("#selectedWord").textContent));
+  $("#dictionaryLookupButton").addEventListener("click", () => fetchDictionaryEntry($("#dictionaryLookupButton").dataset.word));
+  $("#mobileMenuButton").addEventListener("click", () => $("#sidebar").classList.toggle("is-open"));
+  $("#saveWordButton").addEventListener("click", () => {
+    const word = $("#saveWordButton").dataset.word;
+    if (!word) return;
+    const index = state.savedWords.findIndex((item) => item.word === word);
+    if (index >= 0) state.savedWords.splice(index, 1);
+    else state.savedWords.push({ word, articleId: activeArticle().id, savedAt: Date.now() });
+    saveState();
+    $("#saveWordButton").textContent = index >= 0 ? "＋ Save word" : "Saved ✓";
+  });
+  $$("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => {
+    document.getElementById(button.dataset.closeDialog)?.close();
+  }));
+  $("#clearLibraryButton").addEventListener("click", () => {
+    if (!confirm("追加した記事と学習履歴を消して、サンプルだけに戻しますか？")) return;
+    state = structuredClone(defaultState);
+    saveState();
+    closeWordCard();
+    renderAll();
+  });
+}
+
+bindEvents();
+renderAll();
+
+</script>
+  </body>
+</html>
